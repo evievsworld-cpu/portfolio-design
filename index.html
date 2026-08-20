@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hoang Huy Dang — Machine Learning &amp; Applied AI</title>
+<meta name="description" content="MSc Computer Science student at the University of Freiburg. I build and evaluate ML systems: learning-curve forecasting, AutoML, hyperparameter optimisation, and LLM evaluation.">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090f; --surface:#0c1017; --surface-2:#111826;
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+  --ink:#f3f6fb; --ink-2:#aab4c5; --muted:#6d7889;
+  --brand:#7a95ff; --brand-2:#4f6ef2; --accent:#2fe0c0; --warm:#ffb96b;
+  --sans:"Space Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+/* ambient background */
+body::before{
+  content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(760px 520px at 8% -6%, rgba(79,110,242,.30), transparent 68%),
+    radial-gradient(680px 460px at 96% 6%, rgba(47,224,192,.16), transparent 66%),
+    radial-gradient(700px 700px at 60% 110%, rgba(122,149,255,.12), transparent 70%);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(1100px 640px at 50% 0%,#000 20%,transparent 78%);
+  -webkit-mask-image:radial-gradient(1100px 640px at 50% 0%,#000 20%,transparent 78%);
+}
+a{color:var(--brand);text-decoration:none}
+a:hover{color:#a8bcff}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+.wrap{width:min(1140px,calc(100% - 44px));margin:0 auto}
+.mono{font-family:var(--mono)}
+
+/* scroll progress */
+#bar{position:fixed;top:0;left:0;height:2px;width:0;z-index:60;
+  background:linear-gradient(90deg,var(--brand-2),var(--accent))}
+
+/* nav */
+nav{position:sticky;top:0;z-index:50;border-bottom:1px solid transparent;transition:background .25s,border-color .25s,backdrop-filter .25s}
+nav.stuck{background:rgba(7,9,15,.72);backdrop-filter:blur(14px);border-color:var(--line)}
+.nav-in{display:flex;align-items:center;gap:26px;height:70px}
+.logo{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.logo:hover{color:var(--ink)}
+.mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--mono);
+  font-size:.78rem;font-weight:500;color:#04121a;background:linear-gradient(140deg,var(--accent),var(--brand))}
+.nav-links{display:flex;gap:26px;margin-left:auto;font-size:.92rem;font-weight:500}
+.nav-links a{color:var(--ink-2);position:relative}
+.nav-links a::after{content:"";position:absolute;left:0;right:100%;bottom:-6px;height:1px;background:var(--accent);transition:right .25s}
+.nav-links a:hover{color:var(--ink)}
+.nav-links a:hover::after{right:0}
+.cta{border:1px solid var(--line-2);border-radius:11px;padding:9px 15px;font-size:.9rem;font-weight:600;color:var(--ink);
+  background:rgba(255,255,255,.04);transition:border-color .2s,background .2s,transform .2s}
+.cta:hover{border-color:var(--accent);background:rgba(47,224,192,.1);color:var(--ink);transform:translateY(-1px)}
+@media(max-width:820px){.nav-links{display:none}.cta{margin-left:auto}}
+
+/* hero */
+header{padding:86px 0 64px}
+.hero{display:grid;grid-template-columns:1.03fr .97fr;gap:52px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:.76rem;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);background:rgba(47,224,192,.09);
+  border:1px solid rgba(47,224,192,.26);border-radius:999px;padding:7px 14px;margin-bottom:26px}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(47,224,192,.6);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,224,192,.55)}70%{box-shadow:0 0 0 9px rgba(47,224,192,0)}100%{box-shadow:0 0 0 0 rgba(47,224,192,0)}}
+h1{font-size:clamp(2.9rem,6.4vw,4.9rem);line-height:.97;letter-spacing:-.05em;font-weight:700;margin:0 0 20px}
+h1 .grad{background:linear-gradient(96deg,#fff 8%,var(--brand) 52%,var(--accent) 96%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.role{font-family:var(--mono);font-size:.94rem;color:var(--ink-2);margin:0 0 24px;letter-spacing:-.01em}
+.role em{color:var(--accent);font-style:normal}
+.lead{font-size:1.11rem;color:var(--ink-2);max-width:56ch;margin:0 0 14px}
+.lead strong{color:var(--ink);font-weight:600}
+.btns{display:flex;flex-wrap:wrap;gap:13px;margin-top:32px}
+.btn{display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:13px 22px;border-radius:13px;
+  font-weight:600;font-size:.97rem;border:1px solid transparent;transition:transform .2s,box-shadow .2s,background .2s,border-color .2s}
+.btn.solid{background:linear-gradient(135deg,var(--brand-2),#6f5bf0);color:#fff;box-shadow:0 12px 34px -14px rgba(79,110,242,.9)}
+.btn.solid:hover{transform:translateY(-2px);box-shadow:0 18px 42px -14px rgba(79,110,242,1);color:#fff}
+.btn.line{border-color:var(--line-2);color:var(--ink);background:rgba(255,255,255,.03)}
+.btn.line:hover{border-color:var(--accent);color:var(--ink);transform:translateY(-2px)}
+
+/* hero chart */
+.viz{position:relative;border:1px solid var(--line);border-radius:22px;padding:20px 20px 16px;
+  background:linear-gradient(165deg,rgba(17,24,38,.94),rgba(9,12,19,.82));
+  box-shadow:0 40px 90px -50px rgba(0,0,0,.95)}
+.viz-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+.viz-top b{font-size:.86rem;font-weight:600;letter-spacing:-.01em}
+.viz-top span{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.viz svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:8px;font-family:var(--mono);font-size:.69rem;color:var(--muted)}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:7px;vertical-align:middle}
+.draw{stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 2.1s cubic-bezier(.35,.85,.25,1) .25s forwards}
+.draw.d2{animation-delay:.42s}.draw.d3{animation-delay:.58s}.draw.d4{animation-delay:.72s}
+.draw.pred{animation-duration:1.5s;animation-delay:1.15s}
+@keyframes draw{to{stroke-dashoffset:0}}
+.band{opacity:0;animation:fade .9s ease 1.9s forwards}
+.mk{opacity:0;animation:fade .7s ease 2.35s forwards}
+@keyframes fade{to{opacity:1}}
+
+/* metrics */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:64px;
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--line)}
+.metric{background:linear-gradient(180deg,rgba(17,24,38,.7),rgba(9,12,19,.6));padding:26px 22px;transition:background .3s}
+.metric:hover{background:rgba(122,149,255,.07)}
+.metric .n{font-family:var(--mono);font-size:1.85rem;font-weight:500;letter-spacing:-.03em;
+  color:var(--accent);font-variant-numeric:tabular-nums;line-height:1}
+.metric .c{font-size:.86rem;color:var(--muted);margin-top:10px}
+
+/* sections */
+section{padding:96px 0}
+.head{max-width:62ch;margin-bottom:44px}
+.kicker{font-family:var(--mono);font-size:.73rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+h2{font-size:clamp(1.85rem,3.6vw,2.6rem);line-height:1.08;letter-spacing:-.035em;font-weight:700;margin:0 0 14px}
+.head p{color:var(--ink-2);margin:0;font-size:1.04rem}
+h3{font-size:1.16rem;letter-spacing:-.02em;font-weight:600;margin:0 0 12px;line-height:1.28}
+p{margin:0 0 14px}
+
+/* project cards */
+.projects{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.proj{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);
+  padding:30px;background:linear-gradient(170deg,rgba(17,24,38,.72),rgba(9,12,19,.55));
+  transition:transform .3s cubic-bezier(.2,.8,.3,1),border-color .3s,box-shadow .3s;overflow:hidden}
+.proj::before{content:"";position:absolute;inset:0 0 auto;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .35s}
+.proj:hover{transform:translateY(-5px);border-color:var(--line-2);box-shadow:0 34px 70px -40px rgba(0,0,0,.95)}
+.proj:hover::before{opacity:.85}
+.p-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
+.p-num{font-family:var(--mono);font-size:.74rem;color:var(--muted)}
+.p-kind{font-family:var(--mono);font-size:.69rem;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--warm);border:1px solid rgba(255,185,107,.28);background:rgba(255,185,107,.08);
+  border-radius:999px;padding:5px 11px;white-space:nowrap}
+.qa{display:grid;grid-template-columns:82px 1fr;gap:14px;margin-bottom:13px;font-size:.95rem}
+.qa dt{font-family:var(--mono);font-size:.69rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding-top:4px}
+.qa dd{margin:0;color:var(--ink-2)}
+.qa.res dd{color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:20px}
+.chip{font-family:var(--mono);font-size:.74rem;color:var(--ink-2);background:rgba(255,255,255,.045);
+  border:1px solid var(--line);border-radius:8px;padding:5px 10px}
+
+/* capability cards */
+.caps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.cap{border:1px solid var(--line);border-radius:var(--r);padding:30px;
+  background:linear-gradient(170deg,rgba(17,24,38,.6),rgba(9,12,19,.5));transition:border-color .3s,transform .3s}
+.cap:hover{border-color:var(--line-2);transform:translateY(-3px)}
+.ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin-bottom:20px;
+  background:linear-gradient(140deg,rgba(122,149,255,.2),rgba(47,224,192,.14));border:1px solid var(--line-2)}
+.ic svg{width:21px;height:21px;stroke:var(--accent);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.cap p{color:var(--ink-2);font-size:.96rem;margin:0}
+
+/* timeline */
+.tl{position:relative;padding-left:30px}
+.tl::before{content:"";position:absolute;left:5px;top:8px;bottom:8px;width:1px;
+  background:linear-gradient(180deg,var(--accent),rgba(122,149,255,.35),transparent)}
+.ev{position:relative;padding:0 0 34px}
+.ev:last-child{padding-bottom:0}
+.ev::before{content:"";position:absolute;left:-30px;top:8px;width:11px;height:11px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--accent)}
+.ev .when{font-family:var(--mono);font-size:.74rem;color:var(--muted);margin-bottom:7px}
+.ev h3{margin-bottom:7px}
+.ev p{color:var(--ink-2);margin:0;font-size:.97rem;max-width:70ch}
+
+/* contact */
+.contact{border:1px solid var(--line);border-radius:24px;padding:56px 44px;text-align:center;
+  background:
+    radial-gradient(620px 300px at 50% -30%,rgba(79,110,242,.28),transparent 70%),
+    linear-gradient(170deg,rgba(17,24,38,.85),rgba(9,12,19,.7));
+  box-shadow:0 40px 90px -60px rgba(0,0,0,.95)}
+.contact h2{margin-bottom:16px}
+.contact p{color:var(--ink-2);max-width:52ch;margin:0 auto 8px;font-size:1.04rem}
+.contact .btns{justify-content:center;margin-top:30px}
+footer{border-top:1px solid var(--line);padding:30px 0 46px;color:var(--muted);font-size:.87rem;
+  display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(20px);transition:opacity .7s cubic-bezier(.2,.7,.3,1),transform .7s cubic-bezier(.2,.7,.3,1)}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .draw,.band,.mk,.pulse{animation:none;stroke-dashoffset:0;opacity:1}
+}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;gap:38px}
+  .projects,.caps{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  header{padding:52px 0 40px}
+  section{padding:70px 0}
+  .contact{padding:40px 24px}
+}
+@media(max-width:480px){.metrics{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="bar" aria-hidden="true"></div>
+
+<nav id="nav" aria-label="Main navigation">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top"><span class="mark" aria-hidden="true">hd</span> Hoang&nbsp;Huy&nbsp;Dang</a>
+    <div class="nav-links">
+      <a href="#work">Work</a>
+      <a href="#capabilities">Capabilities</a>
+      <a href="#background">Background</a>
+      <a href="desktop.html" title="Interactive desktop-environment version">Desktop&nbsp;mode&nbsp;↗</a>
+    </div>
+    <a class="cta" href="mailto:hd103@email.uni-freiburg.de">Get in touch</a>
+  </div>
+</nav>
+
+<header id="top">
+  <div class="wrap hero">
+    <div>
+      <span class="tag"><span class="pulse" aria-hidden="true"></span> Open to thesis &amp; working-student roles</span>
+      <h1>Machine learning,<br><span class="grad">measured honestly.</span></h1>
+      <p class="role">MSc Computer Science · University of Freiburg · <em>AutoML &amp; foundation models</em></p>
+      <p class="lead">I build systems that answer expensive questions early: <strong>how good will this model be</strong> before training finishes, <strong>which hyperparameters matter</strong>, and <strong>can the model's own confidence be trusted</strong>.</p>
+      <p class="lead">My work is turning a messy question into a reproducible experiment — clear metrics, honest uncertainty, results a team can act on.</p>
+      <div class="btns">
+        <a class="btn solid" href="mailto:hd103@email.uni-freiburg.de">Email me
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn line" href="#work">See my work</a>
+      </div>
+    </div>
+
+    <figure class="viz" role="img" aria-label="Chart: a training loss curve observed up to 40 percent of compute, then forecast to completion with a widening uncertainty band, conditioned on four smaller completed runs.">
+      <div class="viz-top">
+        <b>Forecasting final loss from a partial run</b>
+        <span class="mono">master project</span>
+      </div>
+      <svg viewBox="0 0 480 290" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="bandg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#2fe0c0" stop-opacity=".34"/>
+            <stop offset="100%" stop-color="#2fe0c0" stop-opacity=".07"/>
+          </linearGradient>
+          <linearGradient id="predg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#2fe0c0"/><stop offset="100%" stop-color="#7a95ff"/>
+          </linearGradient>
+        </defs>
+
+        <!-- grid -->
+        <g stroke="rgba(255,255,255,.07)" stroke-width="1">
+          <line x1="46" y1="40" x2="464" y2="40"/><line x1="46" y1="100" x2="464" y2="100"/>
+          <line x1="46" y1="160" x2="464" y2="160"/><line x1="46" y1="220" x2="464" y2="220"/>
+        </g>
+        <!-- axes -->
+        <g stroke="rgba(255,255,255,.22)" stroke-width="1">
+          <line x1="46" y1="20" x2="46" y2="252"/><line x1="46" y1="252" x2="464" y2="252"/>
+        </g>
+        <text x="14" y="38" fill="#6d7889" font-family="JetBrains Mono, monospace" font-size="10" transform="rotate(-90 22 132)">val loss</text>
+        <text x="240" y="278" fill="#6d7889" font-family="JetBrains Mono, monospace" font-size="10" text-anchor="middle">compute →</text>
+
+        <!-- completed smaller runs (context) -->
+        <g fill="none" stroke="rgba(170,180,197,.42)" stroke-width="1.6">
+          <path class="draw"    d="M46,52  C110,152 170,186 260,202 S392,220 464,226"/>
+          <path class="draw d2" d="M46,70  C110,166 170,198 260,214 S392,232 464,238"/>
+          <path class="draw d3" d="M46,88  C110,180 170,210 260,226 S392,242 464,247"/>
+          <path class="draw d4" d="M46,36  C110,140 170,174 260,190 S392,208 464,215"/>
+        </g>
+
+        <!-- uncertainty band -->
+        <path class="band" fill="url(#bandg)"
+          d="M212,196 C286,204 384,208 464,211 L464,243 C384,236 286,220 212,200 Z"/>
+
+        <!-- observed prefix -->
+        <path class="draw pred" fill="none" stroke="url(#predg)" stroke-width="2.8" stroke-linecap="round"
+          d="M46,44 C104,138 150,178 212,198"/>
+        <!-- forecast -->
+        <path class="band" fill="none" stroke="url(#predg)" stroke-width="2.4" stroke-dasharray="6 5" stroke-linecap="round"
+          d="M212,198 C286,212 384,222 464,227"/>
+
+        <!-- observation cutoff -->
+        <g class="mk">
+          <line x1="212" y1="20" x2="212" y2="252" stroke="#ffb96b" stroke-width="1" stroke-dasharray="4 4" opacity=".65"/>
+          <circle cx="212" cy="198" r="4.5" fill="#07090f" stroke="#2fe0c0" stroke-width="2.2"/>
+          <text x="218" y="34" fill="#ffb96b" font-family="JetBrains Mono, monospace" font-size="10">40% observed</text>
+          <text x="464" y="200" fill="#2fe0c0" font-family="JetBrains Mono, monospace" font-size="10" text-anchor="end">forecast + interval</text>
+        </g>
+      </svg>
+      <figcaption class="legend">
+        <span><i style="background:linear-gradient(90deg,#2fe0c0,#7a95ff)"></i>prediction</span>
+        <span><i style="background:rgba(47,224,192,.34)"></i>90% interval</span>
+        <span><i style="background:rgba(170,180,197,.42)"></i>completed smaller runs</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="wrap metrics rv">
+    <div class="metric"><div class="n" data-to="380" data-suffix="k+">0</div><div class="c">model predictions analysed</div></div>
+    <div class="metric"><div class="n" data-to="14" data-suffix="">0</div><div class="c">context strategies benchmarked</div></div>
+    <div class="metric"><div class="n" data-to="2" data-suffix="">0</div><div class="c">foundation-model families compared</div></div>
+    <div class="metric"><div class="n" data-to="4" data-suffix="">0</div><div class="c">model scales, small → large</div></div>
+  </div>
+</header>
+
+<main>
+<section id="work">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="kicker">Selected work</div>
+      <h2>Four projects, one habit</h2>
+      <p>Each started as a concrete question, became a system I built to answer it, and ended in numbers I was willing to defend.</p>
+    </div>
+
+    <div class="projects">
+      <article class="proj rv">
+        <div class="p-top"><span class="p-num">01</span><span class="p-kind">Master project</span></div>
+        <h3>Predicting a model's final quality from a partial training run</h3>
+        <dl class="qa"><dt>Problem</dt><dd>Training large models is expensive. Teams want to stop weak runs early, but early loss curves are noisy and easy to misread.</dd></dl>
+        <dl class="qa"><dt>Built</dt><dd>A pipeline that forecasts final validation loss from a fraction of a curve, using two foundation-model families (ifBO/FT-PFN and TabPFN-style predictors) and 14 strategies for choosing which past runs to condition on.</dd></dl>
+        <dl class="qa res"><dt>Result</dt><dd>Found which strategies transfer from small to large scales, and showed the two families differ sharply in how stable their uncertainty is — judged by interval scores and coverage, not accuracy alone.</dd></dl>
+        <div class="chips"><span class="chip">Python</span><span class="chip">PyTorch</span><span class="chip">TabPFN</span><span class="chip">pandas</span><span class="chip">Slurm</span><span class="chip">calibration</span></div>
+      </article>
+
+      <article class="proj rv">
+        <div class="p-top"><span class="p-num">02</span><span class="p-kind">AutoML</span></div>
+        <h3>Searching for an architecture and its hyperparameters at once</h3>
+        <dl class="qa"><dt>Problem</dt><dd>Architecture and hyperparameters are usually tuned separately, so a promising architecture gets discarded because it was tested with bad settings.</dd></dl>
+        <dl class="qa"><dt>Built</dt><dd>A joint NAS + HPO search over convolutional models on Fashion-MNIST, with a shared budget and a comparison of search strategies against random search.</dd></dl>
+        <dl class="qa res"><dt>Result</dt><dd>A working end-to-end AutoML pipeline, plus a practical read on where a limited search budget actually pays off.</dd></dl>
+        <div class="chips"><span class="chip">Python</span><span class="chip">PyTorch</span><span class="chip">NAS</span><span class="chip">HPO</span></div>
+      </article>
+
+      <article class="proj rv">
+        <div class="p-top"><span class="p-num">03</span><span class="p-kind">Deep learning</span></div>
+        <h3>Does switching optimizers mid-training actually help?</h3>
+        <dl class="qa"><dt>Problem</dt><dd>Adam converges fast early, SGD often generalises better late. Practitioners debate switching with little controlled evidence.</dd></dl>
+        <dl class="qa"><dt>Built</dt><dd>A benchmark that switches optimizers at different points during training and tracks convergence speed and final accuracy across settings.</dd></dl>
+        <dl class="qa res"><dt>Result</dt><dd>Quantified when switching helps and when it costs accuracy; presented as a research poster.</dd></dl>
+        <div class="chips"><span class="chip">Python</span><span class="chip">PyTorch</span><span class="chip">benchmarking</span></div>
+      </article>
+
+      <article class="proj rv">
+        <div class="p-top"><span class="p-num">04</span><span class="p-kind">Industry internship</span></div>
+        <h3>ERP features non-technical teams actually use</h3>
+        <dl class="qa"><dt>Problem</dt><dd>A client's business processes did not fit the out-of-the-box ERP, and manual workarounds cost staff hours every week.</dd></dl>
+        <dl class="qa"><dt>Built</dt><dd>Custom Odoo modules and data migrations, translating business requirements into working features, with testing and maintenance.</dd></dl>
+        <dl class="qa res"><dt>Result</dt><dd>Shipped features into production use — early practice at the part I still enjoy most: turning a vague manual process into something automated.</dd></dl>
+        <div class="chips"><span class="chip">Python</span><span class="chip">PostgreSQL</span><span class="chip">JavaScript</span><span class="chip">XML</span></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="capabilities">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="kicker">Capabilities</div>
+      <h2>What I bring to a team</h2>
+      <p>Depth in experimentation and evaluation, and comfortable owning a pipeline from raw data to a defensible conclusion.</p>
+    </div>
+    <div class="caps">
+      <div class="cap rv">
+        <div class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/><rect x="8" y="8" width="8" height="8" rx="1.5"/></svg></div>
+        <h3>Engineering</h3>
+        <p>Python, PyTorch, pandas, NumPy, scikit-learn, SQL, JavaScript. Reproducible pipelines, batch jobs on a Slurm cluster, version-controlled experiments that still run six months later.</p>
+      </div>
+      <div class="cap rv">
+        <div class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.4"/></svg></div>
+        <h3>Machine learning</h3>
+        <p>Deep learning, AutoML, hyperparameter optimisation, transfer across model scales, foundation models for tabular data, and the basics of reinforcement learning.</p>
+      </div>
+      <div class="cap rv">
+        <div class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 20h18M6 20V9M11 20V4M16 20v-7M21 20v-4"/></svg></div>
+        <h3>Evaluation &amp; communication</h3>
+        <p>Designing metrics that answer the actual question, uncertainty and calibration analysis, statistical comparison, and plots plus write-ups a team can act on.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="background">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="kicker">Background</div>
+      <h2>Where I've been</h2>
+    </div>
+    <div class="tl rv">
+      <div class="ev">
+        <div class="when">expected 2026</div>
+        <h3>MSc Computer Science — University of Freiburg</h3>
+        <p>Specialising in machine learning and deep learning, with coursework and projects in AutoML, reinforcement learning, and large-scale experimentation.</p>
+      </div>
+      <div class="ev">
+        <div class="when">2016 — 2017</div>
+        <h3>Intern, Software Developer — Commgate (S) Pte. Ltd.</h3>
+        <p>ERP module development, data migration, testing and maintenance in a small delivery team.</p>
+      </div>
+      <div class="ev">
+        <div class="when">2017</div>
+        <h3>BEng Information Technology — International University, VNU Vietnam</h3>
+        <p>Foundations in software engineering, algorithms and databases.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="contact rv">
+      <div class="kicker" style="margin-bottom:14px">Let's talk</div>
+      <h2>Looking for a thesis or working-student role</h2>
+      <p>Applied ML, AutoML, or LLM evaluation. Happy to share my CV and project write-ups on request.</p>
+      <div class="btns">
+        <a class="btn solid" href="mailto:hd103@email.uni-freiburg.de">hd103@email.uni-freiburg.de</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="wrap">
+  <span>© 2026 Hoang Huy Dang</span>
+  <span class="mono">Freiburg, Germany · EN / VI / DE (basic)</span>
+</footer>
+
+<script>
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // scroll progress + sticky nav
+  var bar = document.getElementById('bar'), nav = document.getElementById('nav'), ticking = false;
+  function onScroll(){
+    var h = document.documentElement.scrollHeight - innerHeight;
+    bar.style.width = (h > 0 ? (scrollY / h) * 100 : 0) + '%';
+    nav.classList.toggle('stuck', scrollY > 24);
+    ticking = false;
+  }
+  addEventListener('scroll', function(){ if(!ticking){ ticking = true; requestAnimationFrame(onScroll); } }, {passive:true});
+  onScroll();
+
+  // reveal on scroll
+  var items = document.querySelectorAll('.rv');
+  if (reduce || !('IntersectionObserver' in window)) {
+    items.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {threshold:.14, rootMargin:'0px 0px -40px'});
+    items.forEach(function(el, i){ el.style.transitionDelay = (i % 4) * 70 + 'ms'; io.observe(el); });
+  }
+
+  // metric count-up
+  var nums = document.querySelectorAll('.n[data-to]');
+  function run(el){
+    var to = parseFloat(el.dataset.to), sfx = el.dataset.suffix || '', dur = 1100, t0 = performance.now();
+    (function step(t){
+      var p = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(to * e) + sfx;
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+  if (reduce || !('IntersectionObserver' in window)) {
+    nums.forEach(function(el){ el.textContent = el.dataset.to + (el.dataset.suffix || ''); });
+  } else {
+    var io2 = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if (e.isIntersecting) { run(e.target); io2.unobserve(e.target); } });
+    }, {threshold:.5});
+    nums.forEach(function(el){ io2.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>
