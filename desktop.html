@@ -52,6 +52,7 @@ body{
 .g-amber{background:linear-gradient(150deg,#ffc06b,#d1873a)}
 .g-slate{background:linear-gradient(150deg,#5d6b7a,#333c45)}
 .g-rose{background:linear-gradient(150deg,#ff7b8a,#c74551)}
+.g-fold{background:linear-gradient(150deg,#6bc7ff,#2a7fb8)}
 /* ---- windows ---- */
 .win{position:fixed;z-index:10;display:flex;flex-direction:column;min-width:280px;min-height:170px;
   background:var(--win);border:1px solid var(--line-2);border-radius:9px;overflow:hidden;
@@ -122,6 +123,25 @@ li{margin-bottom:5px}
 figure{margin:0}
 figcaption{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-top:10px;display:flex;flex-wrap:wrap;gap:14px}
 figcaption i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+/* ---- file listing (folder windows) ---- */
+.crumb{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin:0 0 15px;padding:7px 10px;
+  border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.22)}
+.files{display:flex;flex-direction:column;gap:2px}
+.file{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:1px solid transparent;
+  border-radius:7px;background:none;color:var(--ink);font:inherit;font-size:.88rem;text-align:left;cursor:pointer}
+.file:hover{background:rgba(61,174,233,.18);border-color:rgba(61,174,233,.42)}
+.file:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.file .gi{width:31px;height:31px;border-radius:8px;flex:0 0 auto}
+.file .gi svg{width:16px;height:16px}
+.file small{display:block;color:var(--muted);font-size:.72rem;font-family:var(--mono);margin-top:2px}
+/* ---- inline pdf viewer ---- */
+.body.raw{padding:0;background:#1b1e21;display:flex;flex-direction:column;overflow:hidden}
+.pdfbar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:7px 10px;background:#232629;
+  border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.pdfbar a{margin-left:auto;color:var(--ink-2);text-decoration:none;border:1px solid var(--line-2);
+  border-radius:5px;padding:4px 9px;white-space:nowrap}
+.pdfbar a:hover{border-color:var(--accent);color:#fff}
+.body.raw iframe{flex:1 1 auto;width:100%;border:0;display:block;background:#1b1e21}
 /* ---- terminal ---- */
 .term{background:#15181b;padding:15px 16px;font-family:var(--mono);font-size:.83rem;line-height:1.62;color:#d5dbe0}
 .term .ln{white-space:pre-wrap;word-break:break-word}
@@ -235,7 +255,8 @@ var G = {
   research:'<svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15c3-7 6.5-8.5 12-9"/><path d="M12 19v-4M17 19v-7"/></svg>',
   cv:      '<svg viewBox="0 0 24 24"><path d="M6 3.5h8l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/></svg>',
   term:    '<svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="1.6"/><path d="M7 10l2.5 2L7 14M12 14.5h5"/></svg>',
-  mail:    '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.6"/><path d="M3.6 6.2 12 13l8.4-6.8"/></svg>'
+  mail:    '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.6"/><path d="M3.6 6.2 12 13l8.4-6.8"/></svg>',
+  folder:  '<svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.2l1.9 2.4h9A1.4 1.4 0 0 1 21 8.8v8.7A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>'
 };
 function icon(k, cls){ return '<span class="gi ' + cls + '" aria-hidden="true">' + G[k] + '</span>'; }
 
@@ -388,6 +409,38 @@ function contactHTML(){ return ''
   + '<div class="kv"><b>Location</b><div>Freiburg im Breisgau, Germany</div></div>'
   + '<div class="kv"><b>Languages</b><div>English, Vietnamese, basic German</div></div>'; }
 
+/* ---------- documents ---------- */
+var FOLDER = 'AutoML Lab Project';
+var DOCS = [
+  {id:'doc_curves', file:'docs/learning-curve-extrapolation-study-project.pdf',
+   name:'Learning Curve Extrapolation Across Scales.pdf',
+   meta:'PDF · 41 pages · 4.8 MB · study project slides',
+   w:820, h:660},
+  {id:'doc_poster', file:'docs/switching-optimizers-poster.pdf',
+   name:'Switching Optimizers — research poster.pdf',
+   meta:'PDF · 1 page (A0) · 2.0 MB · conference-style poster',
+   w:860, h:640}
+];
+
+function docsHTML(){
+  var h = '<p class="crumb">🗀 ~/Documents/' + FOLDER + ' — ' + DOCS.length + ' items</p>'
+        + '<div class="files">';
+  for (var i = 0; i < DOCS.length; i++) {
+    h += '<button type="button" class="file" data-app="' + DOCS[i].id + '">'
+       + icon('cv', 'g-slate')
+       + '<span>' + DOCS[i].name + '<small>' + DOCS[i].meta + '</small></span></button>';
+  }
+  h += '</div><p class="note">Both documents came out of the AutoML lab at the University of Freiburg. '
+     + 'Click one to read it here, or open it in a new tab from the viewer toolbar.</p>';
+  return h;
+}
+
+function pdfHTML(d){
+  return '<div class="pdfbar"><span>' + d.meta + '</span>'
+       + '<a href="' + d.file + '" target="_blank" rel="noopener">Open in new tab \u2197</a></div>'
+       + '<iframe src="' + d.file + '#view=FitH" title="' + d.name + '" loading="lazy"></iframe>';
+}
+
 function termHTML(){ return ''
   + '<div class="ln"><span class="hi">hd@freiburg</span> \u2014 type <span class="p">help</span> to list commands, '
   + '<span class="p">neofetch</span> for the fun one.</div>'; }
@@ -399,11 +452,21 @@ var APPS = {
   research: {t:'Research \u2014 learning curves', g:'research', c:'g-teal', w:680, h:640, html:researchHTML},
   cv:       {t:'CV.pdf',          g:'cv',       c:'g-slate', w:600, h:600, html:cvHTML},
   terminal: {t:'Terminal',        g:'term',     c:'g-vio',   w:640, h:400, html:termHTML, term:true},
-  contact:  {t:'Contact',         g:'mail',     c:'g-rose',  w:520, h:380, html:contactHTML}
+  contact:  {t:'Contact',         g:'mail',     c:'g-rose',  w:520, h:380, html:contactHTML},
+  docs:     {t:FOLDER,            g:'folder',   c:'g-fold',  w:600, h:420, html:docsHTML}
 };
-var ORDER = ['about','projects','research','cv','terminal','contact'];
-var DESC = {about:'Who I am',projects:'What I built',research:'Master project',cv:'Read the CV',
-            terminal:'For the curious',contact:'Say hello'};
+/* each PDF gets its own window id, opened from the folder */
+(function(){
+  for (var i = 0; i < DOCS.length; i++) {
+    (function(d){
+      APPS[d.id] = {t:d.name, g:'cv', c:'g-slate', w:d.w, h:d.h,
+                    html:function(){ return pdfHTML(d); }, raw:true};
+    })(DOCS[i]);
+  }
+})();
+var ORDER = ['about','projects','research','docs','cv','terminal','contact'];
+var DESC = {about:'Who I am',projects:'What I built',research:'Master project',docs:'Slides & poster (PDF)',
+            cv:'Read the CV',terminal:'For the curious',contact:'Say hello'};
 
 /* ---------- state ---------- */
 var wins = {}, z = 10, opened = 0;
@@ -537,7 +600,7 @@ function open(id){
     + '<button class="wbtn ma" type="button" aria-label="Maximise"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1.5" fill="none"/></svg></button>'
     + '<button class="wbtn x" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'
     + '</span></header>'
-    + '<div class="body' + (a.term ? ' term' : '') + '">' + a.html() + '</div>'
+    + '<div class="body' + (a.term ? ' term' : '') + (a.raw ? ' raw' : '') + '">' + a.html() + '</div>'
     + '<span class="rsz" aria-hidden="true"></span>';
   elWins.appendChild(el);
 
@@ -570,9 +633,10 @@ function open(id){
 var CMDS = {
   help: function(){ return 'Available commands:\n'
     + '  about      who I am\n  projects   what I built\n  research   master project summary\n'
-    + '  cv         open the CV window\n  skills     the stack I work in\n  contact    how to reach me\n'
+    + '  cv         open the CV window\n  docs       open the AutoML Lab Project folder\n'
+    + '  skills     the stack I work in\n  contact    how to reach me\n'
     + '  neofetch   system info, portfolio edition\n  ls         list desktop items\n'
-    + '  open <app> open a window (about|projects|research|cv|contact)\n'
+    + '  open <app> open a window (about|projects|research|docs|cv|contact)\n'
     + '  clear      clear the screen\n  exit       close the terminal'; },
   about: function(){ return 'Hoang Huy Dang \u2014 MSc Computer Science, University of Freiburg.\n'
     + 'I build and evaluate ML systems: learning-curve forecasting, AutoML, and\n'
@@ -597,7 +661,12 @@ var CMDS = {
     + 'tooling    git, Slurm clusters, reproducible pipelines'; },
   contact: function(){ return 'email     ' + EMAIL + '\nlocation  Freiburg im Breisgau, Germany\n'
     + 'languages English, Vietnamese, basic German'; },
-  ls: function(){ return 'About\u00a0Me  Projects  Research  CV.pdf  Terminal  Contact'; },
+  ls: function(){ return 'About\u00a0Me  Projects  Research  \'' + FOLDER + '\'/  CV.pdf  Terminal  Contact'; },
+  docs: function(){
+    var s = FOLDER + '/\n';
+    for (var i = 0; i < DOCS.length; i++) s += '  ' + DOCS[i].name + '\n      ' + DOCS[i].meta + '\n';
+    return s + '\nOpening the folder\u2026';
+  },
   neofetch: function(){ return
       '        .--.         hd@freiburg\n'
     + '       |o_o |        -----------\n'
