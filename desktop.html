@@ -126,6 +126,13 @@ figcaption i{display:inline-block;width:14px;height:3px;border-radius:2px;margin
 /* ---- file listing (folder windows) ---- */
 .crumb{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin:0 0 15px;padding:7px 10px;
   border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.22)}
+.crumb .cb{font:inherit;color:var(--accent);background:none;border:0;padding:0 1px;cursor:pointer;border-radius:3px}
+.crumb .cb:hover{text-decoration:underline;color:#fff}
+.crumb .cb:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+.file.up{color:var(--muted)}
+.file.up small{color:rgba(127,140,141,.7)}
+.file.soon{cursor:default;border-style:dashed;border-color:var(--line);opacity:.68}
+.file.soon:hover{background:none;border-color:var(--line)}
 .files{display:flex;flex-direction:column;gap:2px}
 .file{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:1px solid transparent;
   border-radius:7px;background:none;color:var(--ink);font:inherit;font-size:.88rem;text-align:left;cursor:pointer}
@@ -256,7 +263,8 @@ var G = {
   cv:      '<svg viewBox="0 0 24 24"><path d="M6 3.5h8l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/></svg>',
   term:    '<svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="1.6"/><path d="M7 10l2.5 2L7 14M12 14.5h5"/></svg>',
   mail:    '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.6"/><path d="M3.6 6.2 12 13l8.4-6.8"/></svg>',
-  folder:  '<svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.2l1.9 2.4h9A1.4 1.4 0 0 1 21 8.8v8.7A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>'
+  folder:  '<svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.2l1.9 2.4h9A1.4 1.4 0 0 1 21 8.8v8.7A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>',
+  up:      '<svg viewBox="0 0 24 24"><path d="M12 19V6M6 12l6-6 6 6"/></svg>'
 };
 function icon(k, cls){ return '<span class="gi ' + cls + '" aria-hidden="true">' + G[k] + '</span>'; }
 
@@ -409,30 +417,86 @@ function contactHTML(){ return ''
   + '<div class="kv"><b>Location</b><div>Freiburg im Breisgau, Germany</div></div>'
   + '<div class="kv"><b>Languages</b><div>English, Vietnamese, basic German</div></div>'; }
 
-/* ---------- documents ---------- */
-var FOLDER = 'AutoML Lab Project';
-var DOCS = [
-  {id:'doc_curves', file:'docs/learning-curve-extrapolation-study-project.pdf',
-   name:'Learning Curve Extrapolation Across Scales.pdf',
-   meta:'PDF · 41 pages · 4.8 MB · study project slides',
-   w:820, h:660},
-  {id:'doc_poster', file:'docs/switching-optimizers-poster.pdf',
-   name:'Switching Optimizers — research poster.pdf',
-   meta:'PDF · 1 page (A0) · 2.0 MB · conference-style poster',
-   w:860, h:640}
+/* ---------- documents ----------
+   One root folder ("University Projects") holding one folder per project.
+   Adding a project = one entry in FOLDERS; the desktop icon, launcher entry,
+   window, viewer and terminal listing all derive from it. */
+var ROOT_ID = 'docs';
+var ROOT_NAME = 'University Projects';
+
+var FOLDERS = [
+  {id:'fold_master', name:'Master Project',
+   desc:'Learning-curve extrapolation across model scales',
+   files:[
+     {id:'doc_master', file:'docs/learning-curve-extrapolation-study-project.pdf',
+      name:'Learning Curve Extrapolation Across Scales.pdf',
+      meta:'PDF · 41 pages · 4.8 MB · study project slides', w:860, h:660}
+   ]},
+  {id:'fold_automl', name:'AutoML Lab Project',
+   desc:'Switching optimizers with a reinforcement-learning agent',
+   files:[
+     {id:'doc_poster', file:'docs/switching-optimizers-poster.pdf',
+      name:'Switching Optimizers — research poster.pdf',
+      meta:'PDF · 1 page (A0) · 2.0 MB · conference-style poster', w:880, h:640}
+   ]},
+  {id:'fold_sem1', name:'Seminar 1',
+   desc:'Self-supervised vision transformers (DINO)',
+   files:[
+     {id:'doc_sem1', file:'docs/dino-emerging-properties-seminar.pdf',
+      name:'Emerging Properties in Self-Supervised Vision Transformers.pdf',
+      meta:'PDF · 47 slides · 2.4 MB · seminar presentation', w:880, h:620}
+   ]},
+  {id:'fold_sem2', name:'Seminar 2',
+   desc:'Learned hyperparameter optimizers (LHOPT)',
+   files:[
+     {id:'doc_sem2', file:'docs/lhopt-learned-optimizers-seminar.pdf',
+      name:'A Generalizable Approach to Learning Optimizers.pdf',
+      meta:'PDF · 26 slides · 0.5 MB · DAC seminar, WS22/23', w:860, h:640}
+   ]}
 ];
 
-function docsHTML(){
-  var h = '<p class="crumb">🗀 ~/Documents/' + FOLDER + ' — ' + DOCS.length + ' items</p>'
-        + '<div class="files">';
-  for (var i = 0; i < DOCS.length; i++) {
-    h += '<button type="button" class="file" data-app="' + DOCS[i].id + '">'
+/* self-directed work with nothing published yet — placeholder rows, not clickable */
+var EXTERNAL = [
+  {name:'LLM code-review evaluation',
+   desc:'in progress · measuring whether a model knows when it is wrong about code'}
+];
+
+function fileRow(f){
+  return '<button type="button" class="file" data-app="' + f.id + '">'
        + icon('cv', 'g-slate')
-       + '<span>' + DOCS[i].name + '<small>' + DOCS[i].meta + '</small></span></button>';
+       + '<span>' + f.name + '<small>' + f.meta + '</small></span></button>';
+}
+function folderRow(fo){
+  var n = fo.files.length;
+  return '<button type="button" class="file" data-app="' + fo.id + '">'
+       + icon('folder', 'g-fold')
+       + '<span>' + fo.name + '<small>' + fo.desc + ' · ' + n
+       + (n === 1 ? ' file' : ' files') + '</small></span></button>';
+}
+function rootHTML(){
+  var i, h = '<p class="crumb">' + ROOT_NAME + ' — ' + FOLDERS.length + ' folders</p>'
+    + '<h2>University of Freiburg</h2><div class="files">';
+  for (i = 0; i < FOLDERS.length; i++) h += folderRow(FOLDERS[i]);
+  h += '</div>';
+  if (EXTERNAL.length) {
+    h += '<h2>Self-directed</h2><div class="files">';
+    for (i = 0; i < EXTERNAL.length; i++) {
+      h += '<div class="file soon">' + icon('folder', 'g-fold')
+         + '<span>' + EXTERNAL[i].name + '<small>' + EXTERNAL[i].desc + '</small></span></div>';
+    }
+    h += '</div>';
   }
-  h += '</div><p class="note">Both documents came out of the AutoML lab at the University of Freiburg. '
-     + 'Click one to read it here, or open it in a new tab from the viewer toolbar.</p>';
+  h += '<p class="note">Coursework slides and posters from my MSc. Open a folder, then click a '
+     + 'document to read it in a window.</p>';
   return h;
+}
+function folderHTML(fo){
+  var h = '<p class="crumb"><button type="button" class="cb" data-app="' + ROOT_ID + '">'
+        + ROOT_NAME + '</button> / ' + fo.name + '</p><div class="files">'
+        + '<button type="button" class="file up" data-app="' + ROOT_ID + '">' + icon('up', 'g-slate')
+        + '<span>..<small>back to ' + ROOT_NAME + '</small></span></button>';
+  for (var i = 0; i < fo.files.length; i++) h += fileRow(fo.files[i]);
+  return h + '</div><p class="note">' + fo.desc + '</p>';
 }
 
 function pdfHTML(d){
@@ -453,20 +517,30 @@ var APPS = {
   cv:       {t:'CV.pdf',          g:'cv',       c:'g-slate', w:600, h:600, html:cvHTML},
   terminal: {t:'Terminal',        g:'term',     c:'g-vio',   w:640, h:400, html:termHTML, term:true},
   contact:  {t:'Contact',         g:'mail',     c:'g-rose',  w:520, h:380, html:contactHTML},
-  docs:     {t:FOLDER,            g:'folder',   c:'g-fold',  w:600, h:420, html:docsHTML}
+  docs:     {t:ROOT_NAME,         g:'folder',   c:'g-fold',  w:620, h:520, html:rootHTML}
 };
-/* each PDF gets its own window id, opened from the folder */
+/* every project folder and every document gets its own window id */
+var ALL_FILES = [];
 (function(){
-  for (var i = 0; i < DOCS.length; i++) {
-    (function(d){
-      APPS[d.id] = {t:d.name, g:'cv', c:'g-slate', w:d.w, h:d.h,
-                    html:function(){ return pdfHTML(d); }, raw:true};
-    })(DOCS[i]);
+  for (var i = 0; i < FOLDERS.length; i++) {
+    (function(fo){
+      APPS[fo.id] = {t:fo.name, g:'folder', c:'g-fold', w:600, h:360,
+                     html:function(){ return folderHTML(fo); }};
+      for (var j = 0; j < fo.files.length; j++) {
+        (function(d){
+          ALL_FILES.push(d);
+          APPS[d.id] = {t:d.name, g:'cv', c:'g-slate', w:d.w, h:d.h,
+                        html:function(){ return pdfHTML(d); }, raw:true};
+        })(fo.files[j]);
+      }
+    })(FOLDERS[i]);
   }
 })();
+/* launcher/desktop show the root folder only — projects live inside it */
 var ORDER = ['about','projects','research','docs','cv','terminal','contact'];
-var DESC = {about:'Who I am',projects:'What I built',research:'Master project',docs:'Slides & poster (PDF)',
-            cv:'Read the CV',terminal:'For the curious',contact:'Say hello'};
+var DESC = {about:'Who I am',projects:'What I built',research:'Master project',
+            docs:'Slides & posters (PDF)',cv:'Read the CV',terminal:'For the curious',
+            contact:'Say hello'};
 
 /* ---------- state ---------- */
 var wins = {}, z = 10, opened = 0;
@@ -661,10 +735,17 @@ var CMDS = {
     + 'tooling    git, Slurm clusters, reproducible pipelines'; },
   contact: function(){ return 'email     ' + EMAIL + '\nlocation  Freiburg im Breisgau, Germany\n'
     + 'languages English, Vietnamese, basic German'; },
-  ls: function(){ return 'About\u00a0Me  Projects  Research  \'' + FOLDER + '\'/  CV.pdf  Terminal  Contact'; },
+  ls: function(){ return 'About\u00a0Me  Projects  Research  \'' + ROOT_NAME + '\'/  CV.pdf  Terminal  Contact'; },
   docs: function(){
-    var s = FOLDER + '/\n';
-    for (var i = 0; i < DOCS.length; i++) s += '  ' + DOCS[i].name + '\n      ' + DOCS[i].meta + '\n';
+    var s = ROOT_NAME + '/\n', i, j, fo;
+    for (i = 0; i < FOLDERS.length; i++) {
+      fo = FOLDERS[i];
+      s += '  ' + fo.name + '/\n';
+      for (j = 0; j < fo.files.length; j++) {
+        s += '      ' + fo.files[j].name + '\n          ' + fo.files[j].meta + '\n';
+      }
+    }
+    for (i = 0; i < EXTERNAL.length; i++) s += '  ' + EXTERNAL[i].name + '/   (' + EXTERNAL[i].desc + ')\n';
     return s + '\nOpening the folder\u2026';
   },
   neofetch: function(){ return

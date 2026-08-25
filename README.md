@@ -13,20 +13,26 @@ minimise/maximise) is about 200 lines of plain JS.
 
 ## Documents
 
-[docs/](docs/) holds the PDFs surfaced by the **AutoML Lab Project** folder on the
-desktop. The folder window lists them Dolphin-style; clicking one opens it in an
-in-window viewer (`<iframe>` on the browser's built-in PDF plugin) with an
-"Open in new tab" escape hatch.
+Desktop mode has a **University Projects** folder that opens as a two-level tree:
+one folder per project, each holding its documents. Clicking a document opens it in
+an in-window PDF viewer (`<iframe>` on the browser's built-in plugin) with an
+"Open in new tab" escape hatch and a breadcrumb back to the root.
 
-| File | What it is |
-|------|------------|
-| `learning-curve-extrapolation-study-project.pdf` | Study project slides, 41 pages |
-| `switching-optimizers-poster.pdf` | A0 research poster, 1 page |
+| Folder | Document | What it is |
+|--------|----------|------------|
+| Master Project | `learning-curve-extrapolation-study-project.pdf` | Study project slides, 41 pages |
+| AutoML Lab Project | `switching-optimizers-poster.pdf` | A0 research poster, 1 page |
+| Seminar 1 | `dino-emerging-properties-seminar.pdf` | DINO seminar talk, 47 slides |
+| Seminar 2 | `lhopt-learned-optimizers-seminar.pdf` | LHOPT seminar talk, 26 slides |
 
-To add another document, append an entry to the `DOCS` array in
-[desktop.html](desktop.html) — a window id, the file path, a display name, and the
-metadata line. Everything else (icon, launcher entry, `docs` terminal command)
-derives from it.
+The two seminar decks were authored in PowerPoint and converted with LibreOffice
+(`soffice --headless --convert-to pdf`); the `.pptx` originals are not in the repo.
+
+To add a project, append one entry to the `FOLDERS` array in
+[desktop.html](desktop.html) — a folder id, name, description, and its files (window
+id, path, display name, metadata line). The folder window, the PDF viewer windows,
+and the `docs` terminal listing all derive from it. `EXTERNAL` holds non-university
+work with nothing published yet; those render as non-clickable placeholder rows.
 
 The only external request is a Google Fonts stylesheet; without it the pages fall
 back to system fonts.
