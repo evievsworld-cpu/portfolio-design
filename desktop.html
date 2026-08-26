@@ -418,13 +418,15 @@ function contactHTML(){ return ''
   + '<div class="kv"><b>Languages</b><div>English, Vietnamese, basic German</div></div>'; }
 
 /* ---------- documents ----------
-   One root folder ("University Projects") holding one folder per project.
-   Adding a project = one entry in FOLDERS; the desktop icon, launcher entry,
-   window, viewer and terminal listing all derive from it. */
+   One root folder ("Documents") with two sections: university coursework and
+   side projects. Adding a project = one entry in UNI_FOLDERS or SIDE_FOLDERS;
+   the folder window, PDF viewer windows and terminal listing all derive from it.
+   A folder with an empty `files` array renders as a non-clickable placeholder,
+   so a side project becomes browsable the moment it has a document. */
 var ROOT_ID = 'docs';
-var ROOT_NAME = 'University Projects';
+var ROOT_NAME = 'Documents';
 
-var FOLDERS = [
+var UNI_FOLDERS = [
   {id:'fold_master', name:'Master Project',
    desc:'Learning-curve extrapolation across model scales',
    files:[
@@ -455,10 +457,12 @@ var FOLDERS = [
    ]}
 ];
 
-/* self-directed work with nothing published yet — placeholder rows, not clickable */
-var EXTERNAL = [
-  {name:'LLM code-review evaluation',
-   desc:'in progress · measuring whether a model knows when it is wrong about code'}
+/* side projects — outside coursework. An empty `files` array marks work with
+   nothing to show yet; give it a file and the folder becomes browsable. */
+var SIDE_FOLDERS = [
+  {id:'fold_llmeval', name:'LLM code-review evaluation',
+   desc:'in progress · measuring whether a model knows when it is wrong about code',
+   files:[]}
 ];
 
 function fileRow(f){
@@ -468,27 +472,28 @@ function fileRow(f){
 }
 function folderRow(fo){
   var n = fo.files.length;
+  if (!n) {
+    return '<div class="file soon">' + icon('folder', 'g-fold')
+         + '<span>' + fo.name + '<small>' + fo.desc + '</small></span></div>';
+  }
   return '<button type="button" class="file" data-app="' + fo.id + '">'
        + icon('folder', 'g-fold')
        + '<span>' + fo.name + '<small>' + fo.desc + ' · ' + n
        + (n === 1 ? ' file' : ' files') + '</small></span></button>';
 }
+function section(title, list){
+  if (!list.length) return '';
+  var h = '<h2>' + title + '</h2><div class="files">';
+  for (var i = 0; i < list.length; i++) h += folderRow(list[i]);
+  return h + '</div>';
+}
 function rootHTML(){
-  var i, h = '<p class="crumb">' + ROOT_NAME + ' — ' + FOLDERS.length + ' folders</p>'
-    + '<h2>University of Freiburg</h2><div class="files">';
-  for (i = 0; i < FOLDERS.length; i++) h += folderRow(FOLDERS[i]);
-  h += '</div>';
-  if (EXTERNAL.length) {
-    h += '<h2>Self-directed</h2><div class="files">';
-    for (i = 0; i < EXTERNAL.length; i++) {
-      h += '<div class="file soon">' + icon('folder', 'g-fold')
-         + '<span>' + EXTERNAL[i].name + '<small>' + EXTERNAL[i].desc + '</small></span></div>';
-    }
-    h += '</div>';
-  }
-  h += '<p class="note">Coursework slides and posters from my MSc. Open a folder, then click a '
-     + 'document to read it in a window.</p>';
-  return h;
+  var total = UNI_FOLDERS.length + SIDE_FOLDERS.length;
+  return '<p class="crumb">' + ROOT_NAME + ' — ' + total + ' folders</p>'
+    + section('University projects', UNI_FOLDERS)
+    + section('Side projects', SIDE_FOLDERS)
+    + '<p class="note">Open a folder, then click a document to read it in a window. '
+    + 'Dashed folders are work in progress with nothing published yet.</p>';
 }
 function folderHTML(fo){
   var h = '<p class="crumb"><button type="button" class="cb" data-app="' + ROOT_ID + '">'
@@ -520,10 +525,12 @@ var APPS = {
   docs:     {t:ROOT_NAME,         g:'folder',   c:'g-fold',  w:620, h:520, html:rootHTML}
 };
 /* every project folder and every document gets its own window id */
+var ALL_FOLDERS = UNI_FOLDERS.concat(SIDE_FOLDERS);
 var ALL_FILES = [];
 (function(){
-  for (var i = 0; i < FOLDERS.length; i++) {
+  for (var i = 0; i < ALL_FOLDERS.length; i++) {
     (function(fo){
+      if (!fo.files.length) return;   /* placeholder: no window to open */
       APPS[fo.id] = {t:fo.name, g:'folder', c:'g-fold', w:600, h:360,
                      html:function(){ return folderHTML(fo); }};
       for (var j = 0; j < fo.files.length; j++) {
@@ -533,7 +540,7 @@ var ALL_FILES = [];
                         html:function(){ return pdfHTML(d); }, raw:true};
         })(fo.files[j]);
       }
-    })(FOLDERS[i]);
+    })(ALL_FOLDERS[i]);
   }
 })();
 /* launcher/desktop show the root folder only — projects live inside it */
@@ -737,15 +744,19 @@ var CMDS = {
     + 'languages English, Vietnamese, basic German'; },
   ls: function(){ return 'About\u00a0Me  Projects  Research  \'' + ROOT_NAME + '\'/  CV.pdf  Terminal  Contact'; },
   docs: function(){
-    var s = ROOT_NAME + '/\n', i, j, fo;
-    for (i = 0; i < FOLDERS.length; i++) {
-      fo = FOLDERS[i];
-      s += '  ' + fo.name + '/\n';
-      for (j = 0; j < fo.files.length; j++) {
-        s += '      ' + fo.files[j].name + '\n          ' + fo.files[j].meta + '\n';
+    var s = ROOT_NAME + '/\n';
+    function tree(title, list){
+      var i, j, fo, out = '  ' + title + '/\n';
+      for (i = 0; i < list.length; i++) {
+        fo = list[i];
+        out += '    ' + fo.name + '/' + (fo.files.length ? '' : '   (' + fo.desc + ')') + '\n';
+        for (j = 0; j < fo.files.length; j++) {
+          out += '        ' + fo.files[j].name + '\n            ' + fo.files[j].meta + '\n';
+        }
       }
+      return out;
     }
-    for (i = 0; i < EXTERNAL.length; i++) s += '  ' + EXTERNAL[i].name + '/   (' + EXTERNAL[i].desc + ')\n';
+    s += tree('University projects', UNI_FOLDERS) + tree('Side projects', SIDE_FOLDERS);
     return s + '\nOpening the folder\u2026';
   },
   neofetch: function(){ return
