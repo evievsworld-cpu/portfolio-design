@@ -264,7 +264,8 @@ var G = {
   term:    '<svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="1.6"/><path d="M7 10l2.5 2L7 14M12 14.5h5"/></svg>',
   mail:    '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.6"/><path d="M3.6 6.2 12 13l8.4-6.8"/></svg>',
   folder:  '<svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.2l1.9 2.4h9A1.4 1.4 0 0 1 21 8.8v8.7A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>',
-  up:      '<svg viewBox="0 0 24 24"><path d="M12 19V6M6 12l6-6 6 6"/></svg>'
+  up:      '<svg viewBox="0 0 24 24"><path d="M12 19V6M6 12l6-6 6 6"/></svg>',
+  ask:     '<svg viewBox="0 0 24 24"><path d="M20.5 12.5c0 3.9-3.8 7-8.5 7-1 0-2-.14-2.9-.4L4 20.5l1.5-3.4A6.6 6.6 0 0 1 3.5 12.5c0-3.9 3.8-7 8.5-7s8.5 3.1 8.5 7z"/><path d="M9.7 10.2a2.3 2.3 0 0 1 4.4.8c0 1.5-2.1 1.8-2.1 3M12 16.1v.01"/></svg>'
 };
 function icon(k, cls){ return '<span class="gi ' + cls + '" aria-hidden="true">' + G[k] + '</span>'; }
 
@@ -510,6 +511,15 @@ function pdfHTML(d){
        + '<iframe src="' + d.file + '#view=FitH" title="' + d.name + '" loading="lazy"></iframe>';
 }
 
+/* Retrieval bot. Its own page (ask.html) rather than inline markup: the widget is a
+   build artifact of the portfolio_rag project and is copied in, so keeping it in one
+   file means an update is a copy, not a merge. `?embed` drops its outer padding. */
+function askHTML(){
+  return '<div class="pdfbar"><span>hybrid BM25 + LSA retrieval, running in this page</span>'
+       + '<a href="ask.html" target="_blank" rel="noopener">Open in new tab \u2197</a></div>'
+       + '<iframe src="ask.html?embed" title="Ask my portfolio" loading="lazy"></iframe>';
+}
+
 function termHTML(){ return ''
   + '<div class="ln"><span class="hi">hd@freiburg</span> \u2014 type <span class="p">help</span> to list commands, '
   + '<span class="p">neofetch</span> for the fun one.</div>'; }
@@ -522,7 +532,8 @@ var APPS = {
   cv:       {t:'CV.pdf',          g:'cv',       c:'g-slate', w:600, h:600, html:cvHTML},
   terminal: {t:'Terminal',        g:'term',     c:'g-vio',   w:640, h:400, html:termHTML, term:true},
   contact:  {t:'Contact',         g:'mail',     c:'g-rose',  w:520, h:380, html:contactHTML},
-  docs:     {t:ROOT_NAME,         g:'folder',   c:'g-fold',  w:620, h:520, html:rootHTML}
+  docs:     {t:ROOT_NAME,         g:'folder',   c:'g-fold',  w:620, h:520, html:rootHTML},
+  ask:      {t:'Ask me anything', g:'ask',      c:'g-teal',  w:700, h:620, html:askHTML, raw:true}
 };
 /* every project folder and every document gets its own window id */
 var ALL_FOLDERS = UNI_FOLDERS.concat(SIDE_FOLDERS);
@@ -544,8 +555,9 @@ var ALL_FILES = [];
   }
 })();
 /* launcher/desktop show the root folder only — projects live inside it */
-var ORDER = ['about','projects','research','docs','cv','terminal','contact'];
+var ORDER = ['about','projects','research','ask','docs','cv','terminal','contact'];
 var DESC = {about:'Who I am',projects:'What I built',research:'Master project',
+            ask:'Question my documents',
             docs:'Slides & posters (PDF)',cv:'Read the CV',terminal:'For the curious',
             contact:'Say hello'};
 
@@ -714,11 +726,18 @@ function open(id){
 var CMDS = {
   help: function(){ return 'Available commands:\n'
     + '  about      who I am\n  projects   what I built\n  research   master project summary\n'
+    + '  ask        question my documents (retrieval bot)\n'
     + '  cv         open the CV window\n  docs       open the AutoML Lab Project folder\n'
     + '  skills     the stack I work in\n  contact    how to reach me\n'
     + '  neofetch   system info, portfolio edition\n  ls         list desktop items\n'
-    + '  open <app> open a window (about|projects|research|docs|cv|contact)\n'
+    + '  open <app> open a window (about|projects|research|ask|docs|cv|contact)\n'
     + '  clear      clear the screen\n  exit       close the terminal'; },
+  ask: function(){ return 'Ask my portfolio — retrieval over my public documents\n'
+    + '  corpus    117 passages: portfolio text, project notes, slide decks, poster\n'
+    + '  retrieval hybrid BM25 + LSA, computed in your browser (no server call)\n'
+    + '  answers   cite the document and page they came from\n'
+    + '  declines  says so when the documents do not cover the question\n\n'
+    + 'Opening the window…'; },
   about: function(){ return 'Hoang Huy Dang \u2014 MSc Computer Science, University of Freiburg.\n'
     + 'I build and evaluate ML systems: learning-curve forecasting, AutoML, and\n'
     + 'whether a model\u2019s own confidence can be trusted. Currently looking for a\n'

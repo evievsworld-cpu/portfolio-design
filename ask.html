@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask my portfolio</title>
+<meta name="description" content="Ask a question about Hoang Huy Dang's work. Retrieval runs in your browser over his public documents; answers cite the page they came from.">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Design tokens copied from index.html so this reads as part of the site. */
+:root{
+  --bg:#07090f; --surface:#0c1017; --surface-2:#111826;
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+  --ink:#f3f6fb; --ink-2:#aab4c5; --muted:#6d7889;
+  --brand:#7a95ff; --brand-2:#4f6ef2; --accent:#2fe0c0; --warm:#ffb96b;
+  --sans:"Space Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:18px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  line-height:1.6;-webkit-font-smoothing:antialiased;padding:26px 20px 40px;
+}
+/* Embedded as a desktop window: drop the outer chrome, the window supplies it. */
+body.embed{padding:18px}
+.wrap{width:min(720px,100%);margin:0 auto}
+a{color:var(--brand);text-decoration:none}
+a:hover{color:#a8bcff}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+h1{font-size:1.5rem;letter-spacing:-.03em;margin:0 0 8px;font-weight:700}
+.sub{color:var(--ink-2);font-size:.95rem;margin:0 0 22px}
+.sub code{font-family:var(--mono);font-size:.85em;color:var(--accent)}
+
+form{display:flex;gap:10px;margin-bottom:14px}
+input[type=text]{
+  flex:1;min-width:0;background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line-2);border-radius:12px;padding:13px 15px;
+  font-family:var(--sans);font-size:.98rem;
+}
+input[type=text]::placeholder{color:var(--muted)}
+button{
+  font-family:var(--sans);font-size:.95rem;font-weight:600;cursor:pointer;
+  border-radius:12px;padding:13px 20px;border:1px solid transparent;
+  background:linear-gradient(135deg,var(--brand-2),#6f5bf0);color:#fff;
+  transition:transform .2s,box-shadow .2s,opacity .2s;
+}
+button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 30px -14px rgba(79,110,242,.9)}
+button:disabled{opacity:.55;cursor:default}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.chip{
+  font-family:var(--mono);font-size:.76rem;color:var(--ink-2);cursor:pointer;
+  background:rgba(255,255,255,.045);border:1px solid var(--line);
+  border-radius:8px;padding:6px 11px;transition:border-color .2s,color .2s;
+}
+.chip:hover{border-color:var(--accent);color:var(--ink)}
+
+.panel{
+  border:1px solid var(--line);border-radius:var(--r);padding:22px;
+  background:linear-gradient(170deg,rgba(17,24,38,.72),rgba(9,12,19,.55));
+}
+.panel.hidden{display:none}
+.status{font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-bottom:12px}
+.answer{font-size:1.02rem;margin:0 0 18px;white-space:pre-wrap}
+.answer .cite{
+  font-family:var(--mono);font-size:.78em;color:var(--accent);
+  padding:0 2px;vertical-align:.1em;
+}
+
+/* A decline is a feature, so it gets its own visual state rather than reading
+   as an error or an apology. */
+.panel.declined{border-color:rgba(255,185,107,.34);background:linear-gradient(170deg,rgba(38,29,17,.6),rgba(19,14,9,.5))}
+.panel.declined .status{color:var(--warm)}
+
+.srcs{border-top:1px solid var(--line);padding-top:16px}
+.srcs h2{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:500}
+.src{display:block;border:1px solid var(--line);border-radius:11px;padding:11px 13px;
+  margin-bottom:8px;transition:border-color .2s,background .2s}
+.src:hover{border-color:var(--line-2);background:rgba(122,149,255,.06)}
+.src b{display:block;font-size:.88rem;font-weight:600;color:var(--ink)}
+.src .loc{font-family:var(--mono);font-size:.73rem;color:var(--accent)}
+.src .snip{font-size:.85rem;color:var(--ink-2);margin-top:6px;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.src .n{font-family:var(--mono);font-size:.73rem;color:var(--muted);float:right}
+
+.foot{margin-top:20px;font-size:.82rem;color:var(--muted)}
+.foot b{color:var(--ink-2);font-weight:500}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ask my portfolio</h1>
+  <p class="sub">
+    Retrieval runs <b>in your browser</b> over my public documents — no server sees your
+    question until an answer is generated, and every answer cites the page it came from.
+    If the documents don't cover something, it says so instead of guessing.
+  </p>
+
+  <form id="f" autocomplete="off">
+    <input type="text" id="q" maxlength="300" placeholder="e.g. what did the master project find?"
+           aria-label="Your question">
+    <button type="submit" id="go">Ask</button>
+  </form>
+
+  <div class="chips" id="chips"></div>
+
+  <section class="panel hidden" id="out" aria-live="polite">
+    <div class="status" id="status"></div>
+    <p class="answer" id="answer"></p>
+    <div class="srcs hidden" id="srcs">
+      <h2>Sources</h2>
+      <div id="srclist"></div>
+    </div>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script type="module">
+import { Retriever } from "./retrieve.js";
+
+/* ------------------------------------------------------------------ config */
+/* Set to the deployed Worker URL to enable generated answers. Left empty, the
+   page runs in extractive mode: it still retrieves and cites, it just quotes the
+   documents instead of writing prose. That is the no-key default (SPEC.md §5.2). */
+const WORKER_URL = "";
+
+const INDEX_URL = "data/index.json";
+const CACHE_URL = "data/answers_cache.json";
+const TOP_K = 5;
+const MAX_CHUNKS_TO_MODEL = 6;
+
+const SUGGESTED = [
+  "What was the master project about?",
+  "Which retrievers does this bot use?",
+  "What is he looking for right now?",
+  "What was the audit pass rate on the bug pairs?",
+];
+
+/* ------------------------------------------------------------------- state */
+const el = (id) => document.getElementById(id);
+let retriever = null;
+let cache = {};
+
+if (new URLSearchParams(location.search).has("embed")) {
+  document.body.classList.add("embed");
+}
+
+/* ---------------------------------------------------------------- helpers */
+function normalizeKey(s) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+  );
+}
+
+/** Render [1] citation markers as styled spans. Escapes first — the answer text
+    comes from a model, so it is never inserted as raw HTML. */
+function renderAnswer(text) {
+  return escapeHtml(text).replace(/\[(\d+)\]/g, '<span class="cite">[$1]</span>');
+}
+
+function showSources(hits, citedNumbers) {
+  const list = el("srclist");
+  const shown = citedNumbers && citedNumbers.length
+    ? citedNumbers.map((n) => ({ hit: hits[n - 1], n })).filter((x) => x.hit)
+    : hits.map((hit, i) => ({ hit, n: i + 1 }));
+
+  list.innerHTML = shown
+    .map(({ hit, n }) => {
+      const loc = [hit.source, hit.locator].filter(Boolean).join(" · ");
+      return `<a class="src" href="${escapeHtml(hit.url)}" target="_blank" rel="noopener">
+        <span class="n">[${n}]</span>
+        <b>${escapeHtml(hit.source)}</b>
+        <span class="loc">${escapeHtml(loc)}</span>
+        <div class="snip">${escapeHtml(hit.text.slice(0, 220))}${hit.text.length > 220 ? "…" : ""}</div>
+      </a>`;
+    })
+    .join("");
+  el("srcs").classList.remove("hidden");
+}
+
+function render({ status, answer, hits, cited, declined }) {
+  const out = el("out");
+  out.classList.remove("hidden");
+  out.classList.toggle("declined", Boolean(declined));
+  el("status").textContent = status;
+  el("answer").innerHTML = renderAnswer(answer);
+  if (hits && hits.length) showSources(hits, cited);
+  else el("srcs").classList.add("hidden");
+}
+
+/* ------------------------------------------------------------- answer paths */
+
+/** No model: quote the best-matching passage verbatim. Honest and unbreakable. */
+function extractive(hits) {
+  if (!hits.length || hits[0].score <= 0) {
+    return {
+      status: "no match in the documents",
+      answer:
+        "Nothing in my published documents matches that. If it is something you need " +
+        "to know, email me at hd103@email.uni-freiburg.de.",
+      hits: [],
+      declined: true,
+    };
+  }
+  return {
+    status: "retrieved · quoting the source directly",
+    answer: hits[0].text,
+    hits,
+    cited: [1],
+  };
+}
+
+async function generate(question, hits) {
+  const chunks = hits.slice(0, MAX_CHUNKS_TO_MODEL).map((h) => ({
+    chunk_id: h.chunk_id,
+    source: h.source,
+    locator: h.locator,
+    text: h.text,
+  }));
+
+  const res = await fetch(`${WORKER_URL.replace(/\/$/, "")}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, chunks }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    // The Worker flags recoverable conditions (no key, rate limited, upstream
+    // down) with fallback:true so the page degrades instead of erroring.
+    if (data.fallback) return null;
+    throw new Error(data.error || `worker returned ${res.status}`);
+  }
+  return {
+    status: data.declined
+      ? "not covered by my documents"
+      : "answered from the sources below",
+    answer: data.answer,
+    hits,
+    cited: data.cited,
+    declined: data.declined,
+  };
+}
+
+/* ------------------------------------------------------------------- driver */
+async function ask(question) {
+  const q = question.trim();
+  if (!q || !retriever) return;
+
+  el("go").disabled = true;
+  el("status").textContent = "searching…";
+  el("out").classList.remove("hidden");
+
+  try {
+    const hits = retriever.search(q, TOP_K, "hybrid");
+
+    const cached = cache[normalizeKey(q)];
+    if (cached) {
+      render({
+        status: "cached answer · no API call",
+        answer: cached.answer,
+        hits,
+        cited: cached.cited,
+        declined: cached.declined,
+      });
+      return;
+    }
+
+    if (WORKER_URL) {
+      try {
+        const generated = await generate(q, hits);
+        if (generated) {
+          render(generated);
+          return;
+        }
+      } catch (err) {
+        console.warn("generation failed, falling back to extractive:", err);
+      }
+    }
+
+    render(extractive(hits));
+  } finally {
+    el("go").disabled = false;
+  }
+}
+
+/* --------------------------------------------------------------------- init */
+el("chips").innerHTML = SUGGESTED.map(
+  (s) => `<button type="button" class="chip">${escapeHtml(s)}</button>`
+).join("");
+el("chips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  el("q").value = chip.textContent;
+  ask(chip.textContent);
+});
+
+el("f").addEventListener("submit", (e) => {
+  e.preventDefault();
+  ask(el("q").value);
+});
+
+(async function init() {
+  try {
+    const [indexRes, cacheRes] = await Promise.all([
+      fetch(INDEX_URL),
+      fetch(CACHE_URL).catch(() => null),
+    ]);
+    if (!indexRes.ok) throw new Error(`index: ${indexRes.status}`);
+    retriever = new Retriever(await indexRes.json());
+    if (cacheRes && cacheRes.ok) {
+      cache = (await cacheRes.json().catch(() => ({}))).answers || {};
+    }
+    const m = retriever.meta;
+    el("foot").innerHTML =
+      `<b>${m.n_chunks}</b> passages from my public documents · ` +
+      `hybrid BM25 + LSA retrieval, running locally in this page · ` +
+      (WORKER_URL ? "answers generated by Claude" : "extractive mode (no API key configured)");
+  } catch (err) {
+    el("foot").textContent = `Could not load the index (${err.message}).`;
+  }
+})();
+</script>
+</body>
+</html>
