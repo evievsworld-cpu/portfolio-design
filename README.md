@@ -6,6 +6,11 @@ Personal portfolio site. Two entrances, same content:
 - **[desktop.html](desktop.html)** — interactive KDE Plasma-style desktop environment,
   with draggable/resizable windows, a taskbar, an application launcher, and a
   working terminal (`help`, `neofetch`, `open <app>`).
+- **[ask.html](ask.html)** — ask a question about my work. Retrieval (BM25 + LSA,
+  RRF-fused, MMR-reranked) runs in your browser over 117 passages from my published
+  documents; answers cite the document and page, and it declines when the documents
+  don't cover the question. Also an "Ask me anything" window and an `ask` terminal
+  command in desktop mode.
 
 No framework, no build step, no dependencies — hand-written HTML, CSS, and vanilla
 JS. The window manager (pointer-capture dragging, resize, focus stacking, z-order,
