@@ -31,7 +31,7 @@ export function tokenize(text) {
 
 /* ------------------------------------------------------------ query expansion */
 //
-// Must match _ALIAS_GROUPS in src/text.py exactly, including order. See the leakage
+// Must match ALIAS_GROUPS in src/text.py exactly, including order. See the leakage
 // warning in that file: the `contact` group was written after observing a specific
 // eval failure, so improvement on that question is not independent evidence.
 
