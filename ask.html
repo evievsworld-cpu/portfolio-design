@@ -169,11 +169,33 @@ function renderAnswer(text) {
   return escapeHtml(text).replace(/\[(\d+)\]/g, '<span class="cite">[$1]</span>');
 }
 
-function showSources(hits, citedNumbers) {
+/**
+ * Which sources to list. `cited` may be positional numbers (from the model, which
+ * saw the blocks in this exact order) or chunk ids (from the cache, which was
+ * written against an older retrieval and cannot trust positions). Resolving cache
+ * entries by id fixes a bug where hand-written [1] markers pointed at whatever
+ * happened to rank first — correct prose citing an unrelated slide.
+ */
+function resolveCited(hits, cited) {
+  if (!cited || !cited.length) return hits.map((hit, i) => ({ hit, n: i + 1 }));
+  if (typeof cited[0] === "number") {
+    return cited.map((n) => ({ hit: hits[n - 1], n })).filter((x) => x.hit);
+  }
+  const out = [];
+  cited.forEach((id) => {
+    const idx = hits.findIndex((h) => h.chunk_id === id);
+    if (idx >= 0) out.push({ hit: hits[idx], n: idx + 1 });
+  });
+  return out;
+}
+
+function showSources(hits, cited) {
   const list = el("srclist");
-  const shown = citedNumbers && citedNumbers.length
-    ? citedNumbers.map((n) => ({ hit: hits[n - 1], n })).filter((x) => x.hit)
-    : hits.map((hit, i) => ({ hit, n: i + 1 }));
+  const shown = resolveCited(hits, cited);
+  if (!shown.length) {
+    el("srcs").classList.add("hidden");
+    return;
+  }
 
   list.innerHTML = shown
     .map(({ hit, n }) => {
@@ -201,22 +223,32 @@ function render({ status, answer, hits, cited, declined }) {
 
 /* ------------------------------------------------------------- answer paths */
 
-/** No model: quote the best-matching passage verbatim. Honest and unbreakable. */
-function extractive(hits) {
-  if (!hits.length || hits[0].score <= 0) {
-    return {
-      status: "no match in the documents",
-      answer:
-        "Nothing in my published documents matches that. If it is something you need " +
-        "to know, email me at hd103@email.uni-freiburg.de.",
-      hits: [],
-      declined: true,
-    };
+const DECLINE_TEXT =
+  "That isn't covered by my published documents, so I'd rather not guess. " +
+  "Email me at hd103@email.uni-freiburg.de and I can answer directly.";
+
+/** The decline state, shared by every answer path. */
+function declined(status) {
+  return { status, answer: DECLINE_TEXT, hits: [], declined: true };
+}
+
+/**
+ * No model: quote the best-matching passage verbatim. Honest and unbreakable.
+ *
+ * Abstention is decided by the retriever (raw BM25 + literal-term coverage), NOT by
+ * inspecting `score` here. The first version of this function tested
+ * `hits[0].score <= 0`, but fused scores are rank- or min-max-derived, so the top
+ * hit is ~1.0 for every query however irrelevant — it fabricated on 9 of 10
+ * out-of-scope questions, confidently quoting a DINO slide when asked about Rust.
+ */
+function extractive(result) {
+  if (result.abstain || !result.hits.length) {
+    return declined("not covered by my documents");
   }
   return {
     status: "retrieved · quoting the source directly",
-    answer: hits[0].text,
-    hits,
+    answer: result.hits[0].text,
+    hits: result.hits,
     cited: [1],
   };
 }
@@ -263,23 +295,33 @@ async function ask(question) {
   el("out").classList.remove("hidden");
 
   try {
-    const hits = retriever.search(q, TOP_K, "hybrid");
+    const result = retriever.search(q, TOP_K, "hybrid");
 
     const cached = cache[normalizeKey(q)];
     if (cached) {
+      // Cached declines carry no sources; cached answers cite by chunk_id, which
+      // resolveCited() maps onto the live hits (positions are not stable).
       render({
         status: "cached answer · no API call",
         answer: cached.answer,
-        hits,
+        hits: cached.declined ? [] : result.hits,
         cited: cached.cited,
         declined: cached.declined,
       });
       return;
     }
 
+    // Abstain before spending a model call: if the corpus does not cover the
+    // question, no amount of generation will fix that, and asking anyway invites
+    // the model to pad an answer out of loosely-related context.
+    if (result.abstain) {
+      render(declined("not covered by my documents"));
+      return;
+    }
+
     if (WORKER_URL) {
       try {
-        const generated = await generate(q, hits);
+        const generated = await generate(q, result.hits);
         if (generated) {
           render(generated);
           return;
@@ -289,7 +331,7 @@ async function ask(question) {
       }
     }
 
-    render(extractive(hits));
+    render(extractive(result));
   } finally {
     el("go").disabled = false;
   }
