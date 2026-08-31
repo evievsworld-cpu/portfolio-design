@@ -1,37 +1,191 @@
 {
-  "_note": "Zero-cost fallback answers (SPEC.md §5.2). Only DECLINES live here now. The four hand-written in-scope answers were removed on 2026-08-29: inspection showed their citations were not grounded in what retrieval actually returns — 'which retrievers does this bot use' retrieves a chunk about Adam vs SGD, and the detailed master-project claims were supported by no chunk in the live top-5. Correct prose citing an unrelated slide is worse than no citation, because it looks verified. In-scope questions are served by extractive mode instead, which quotes the passage retrieval actually found. Declines need no citations, so they are safe, and they give better wording than the generic decline for questions like the phone-number one.",
-  "_provenance": "hand-written 2026-08-29; zero model calls made. Replace with real cached model responses once the Worker is deployed, and update this field.",
+  "_note": "Zero-cost fallback answers (SPEC.md §5.2), served with no API call — so a wrong entry is served confidently and forever. History worth keeping: four hand-written in-scope answers were removed on 2026-08-29 because their *positional* citations pointed at unrelated chunks ('which retrievers does this bot use' retrieved a chunk about Adam vs SGD). Correct prose citing an unrelated slide is worse than no citation, because it looks verified. Every entry here is now model-generated and citation-checked (see _provenance), and citations are chunk_id strings, not positions. Questions with no entry fall back to extractive mode, which quotes the passage retrieval actually found.",
+  "_provenance": "Every entry was produced 2026-08-30 by a Claude model answering worker/index.js's exact SYSTEM_PROMPT (parsed from that file, not restated) over the real retrieved top-5 for each question, run in the dev sandbox via src/model_probe.py — NOT by the deployed Worker, which is still undeployed. So these exercise the prompt contract, not the endpoint. The earlier hand-written declines were replaced by the model's own: they cover four more questions and, unlike the hand-written ones, speak in the same third person as the answers, so the widget no longer switches voice mid-session. Admission rules (src/build_cache.py): answers must be graded `grounded` by an independent adversarial pass that was blind to the labels, commit zero contract violations, cite only chunk_ids still retrievable in the top-5 for their normalized key, and not be keys the abstention gate rejects. Declines need no grounding review — they assert nothing — but must still be violation-free, which is what would catch a decline leaking a contact detail.",
   "_schema": "answers[normalized_question] = {answer, declined, cited?}. `cited` is a list of chunk_id strings (NOT positional indices — positions are not stable across re-retrieval); tests/test_cache.py enforces that every cited id exists and is reachable for its question.",
   "answers": {
-    "what are his salary expectations": {
-      "answer": "My documents don't cover salary expectations — that's worth an email to hd103@email.uni-freiburg.de.",
-      "cited": [],
-      "declined": true
-    },
-    "what is his phone number and home address": {
-      "answer": "Those aren't in my published documents, deliberately. The university email is the way to reach me: hd103@email.uni-freiburg.de.",
-      "cited": [],
-      "declined": true
-    },
-    "does he have any rust experience": {
-      "answer": "Nothing in my documents mentions Rust, so I can't say either way. Email hd103@email.uni-freiburg.de to ask directly.",
-      "cited": [],
-      "declined": true
-    },
     "what date could he start a new role": {
-      "answer": "My documents don't state a start date. Email hd103@email.uni-freiburg.de and he can tell you.",
+      "answer": "The documents do not cover his availability or a start date; for that, email him at hd103@email.uni-freiburg.de.",
       "cited": [],
       "declined": true
     },
-    "has he ever worked at google or meta": {
-      "answer": "My documents don't mention working at either. They cover a software-development internship at Commgate and his university projects; email hd103@email.uni-freiburg.de for anything beyond that.",
+    "how much kubernetes and docker experience does he have": {
+      "answer": "The documents do not cover any Kubernetes or Docker experience; to ask about that, email him at hd103@email.uni-freiburg.de.",
       "cited": [],
       "declined": true
     },
     "what was his final grade average": {
-      "answer": "Grades aren't in my published documents. Email hd103@email.uni-freiburg.de and he can share a transcript.",
+      "answer": "The documents do not cover his grades; to ask about that, email him at hd103@email.uni-freiburg.de.",
       "cited": [],
       "declined": true
+    },
+    "what are his salary expectations": {
+      "answer": "The documents do not cover his salary expectations; email him at hd103@email.uni-freiburg.de.",
+      "cited": [],
+      "declined": true
+    },
+    "does he have any rust experience": {
+      "answer": "The documents do not mention any Rust experience; email him at hd103@email.uni-freiburg.de.",
+      "cited": [],
+      "declined": true
+    },
+    "does he prefer tensorflow or jax": {
+      "answer": "The documents do not cover any preference between TensorFlow and JAX; email him at hd103@email.uni-freiburg.de.",
+      "cited": [],
+      "declined": true
+    },
+    "what is his phone number and home address": {
+      "answer": "The documents do not include a phone number or home address; email him at hd103@email.uni-freiburg.de.",
+      "cited": [],
+      "declined": true
+    },
+    "has he ever worked at google or meta": {
+      "answer": "The documents do not say whether he has worked at Google or Meta; email him at hd103@email.uni-freiburg.de.",
+      "cited": [],
+      "declined": true
+    },
+    "does he have a driving licence": {
+      "answer": "The documents do not cover whether he has a driving licence; email him at hd103@email.uni-freiburg.de to ask.",
+      "cited": [],
+      "declined": true
+    },
+    "has he published a paper at neurips": {
+      "answer": "The documents do not cover any NeurIPS publication; email him at hd103@email.uni-freiburg.de to ask.",
+      "cited": [],
+      "declined": true
+    },
+    "can you stop a bad training run early instead of paying for all of it": {
+      "answer": "That is the premise of his master project: teams want to stop weak runs early, but early loss curves are noisy and easy to misread, so he built a pipeline that forecasts final validation loss from only the first fraction of a learning curve [1]. ifBO outputs a full predictive distribution rather than a point estimate, which the slides note is useful for deciding when to stop a run early [2].",
+      "cited": [
+        "projects_master_project_predicting_a_model_s_fina_0_0",
+        "master_project_p_4_3_0"
+      ],
+      "declined": false
+    },
+    "what was the audit pass rate on the mined bug pairs": {
+      "answer": "He audited 30 pairs by hand against the requirement that the bug be findable from the shown function alone, and only 43% passed [4]. Many mined fixes are real but only diagnosable with repo-wide context the benchmark never shows the model, so the corpus is committed with that limitation recorded rather than presented as a clean benchmark [4].",
+      "cited": [
+        "projects_llm_code_review_evaluation_in_progress_5_1"
+      ],
+      "declined": false
+    },
+    "how do i get in touch with him": {
+      "answer": "By email: hd103@email.uni-freiburg.de, which he states is the best way to reach him [1][5]. He is currently looking for a master's thesis or working-student role in applied ML, AutoML, or LLM evaluation, and is happy to share his CV and project write-ups on request [1][5].",
+      "cited": [
+        "bio_about_me_0_0",
+        "site_looking_for_a_thesis_or_working_student__19_0"
+      ],
+      "declined": false
+    },
+    "what does self distillation with no labels mean": {
+      "answer": "It means learning a student model by distilling knowledge from itself, without labels and without referring to another model; when student and teacher are the same network it is called self-distillation [4]. DINO adapts BYOL's student/teacher setup with a vision transformer core, a cross-entropy loss, and collapse prevention by centering and sharpening the teacher output [1]. Properties emerge from it, such as attention maps that segment objects and features usable for k-NN classification without fine-tuning [2].",
+      "cited": [
+        "dino_seminar_p_18_17_0",
+        "projects_seminar_dino_and_the_emerging_properties_3_0",
+        "dino_seminar_p_46_45_0"
+      ],
+      "declined": false
+    },
+    "who were the co authors on the switching optimizers poster": {
+      "answer": "The poster lists four authors, all at the University of Freiburg: Arian Mousakhan, Hoang Dang, Tidiane Camaret Ndir, and Zainab Sultan [3]. The project notes describe it as work done with three coursemates at the University of Freiburg [5].",
+      "cited": [
+        "switching_optimizers_p_1_0_0",
+        "projects_switching_optimizers_a_reinforcement_lea_2_0"
+      ],
+      "declined": false
+    },
+    "what kind of role is he looking for right now": {
+      "answer": "He is looking for a thesis or working-student role in applied ML, AutoML, or LLM evaluation, and offers to share his CV and project write-ups on request [1]. He can be reached at hd103@email.uni-freiburg.de [1].",
+      "cited": [
+        "site_looking_for_a_thesis_or_working_student__19_0"
+      ],
+      "declined": false
+    },
+    "what was the caveat about the soft agent": {
+      "answer": "The soft agent's performance was extremely sensitive to the initial point [3]; the poster states it was extremely sensitive to initial points and to the reward function [1]. The notes treat this as a caveat that belongs next to the headline result [3].",
+      "cited": [
+        "switching_optimizers_p_1_0_2",
+        "projects_switching_optimizers_a_reinforcement_lea_2_1"
+      ],
+      "declined": false
+    },
+    "what was the master project about": {
+      "answer": "It was on learning-curve extrapolation with foundation models [2], titled 'Learning Curve Extrapolation Across Scales' [3]. It was a study project with Thanika Somasundaram Thillaikumar and Aanant Chand, supervised by Johannes Hog and Neeratyoy Mallik [3].",
+      "cited": [
+        "bio_msc_computer_science_university_of_freib_1_0",
+        "master_project_p_1_0_0"
+      ],
+      "declined": false
+    },
+    "why search over architecture and hyperparameters at the same time": {
+      "answer": "Because tuning them separately means a promising architecture can be discarded just for having been tested with bad settings [1]. He built a joint NAS and HPO pipeline over convolutional models on Fashion-MNIST, comparing search strategies against a random-search baseline under an equal budget, which gave a practical read on where a limited search budget pays off [1].",
+      "cited": [
+        "projects_automl_lab_project_searching_for_an_arch_1_0"
+      ],
+      "declined": false
+    },
+    "what would he call his specialism rather than just a familiarity": {
+      "answer": "Engineering practice: reproducible pipelines, version-controlled experiments that still run six months later, and caching runs so results can be regenerated without re-spending compute [1].",
+      "cited": [
+        "bio_skills_4_1"
+      ],
+      "declined": false
+    },
+    "which programming languages and libraries does he use": {
+      "answer": "Python is his primary language, with PyTorch, pandas, NumPy, scikit-learn, and matplotlib day to day, plus SQL and PostgreSQL, JavaScript, XML, and git [3]. The portfolio lists Python, PyTorch, pandas, NumPy, scikit-learn, SQL, and JavaScript [1]. He runs batch experiments on a Slurm cluster [3].",
+      "cited": [
+        "site_capabilities_10_0",
+        "bio_skills_4_0"
+      ],
+      "declined": false
+    },
+    "what made the comparison between the two predictors fair": {
+      "answer": "Normalisation choices and how past runs are subsampled both move the results, so he separated genuine differences between the predictors from artefacts of the experimental setup [1]. He also measured how sensitive each family is to how the observed prefix of the curve is sampled, finding one family far more sensitive, which meant some earlier robustness claims did not hold up [1].",
+      "cited": [
+        "projects_master_project_predicting_a_model_s_fina_0_2"
+      ],
+      "declined": false
+    },
+    "what was the learned optimizers seminar about": {
+      "answer": "It covered learned hyperparameter optimizers (LHOPT) from a generalization-first perspective, leveraging priors of existing algorithms such as Adam and acting as data-driven schedules that interpolate with hand-designed optimizers [1]. It described the inner/outer step setup, where outer steps use statistics like validation loss to update the inner optimizer's hyperparameters [2], the CIAO inner optimizer [4], and results where LHOPT beat AdamW but slightly underperformed SGD on ResNet/ImageNet [3].",
+      "cited": [
+        "lhopt_seminar_p_4_3_0",
+        "lhopt_seminar_p_6_5_0",
+        "lhopt_seminar_p_16_15_0",
+        "lhopt_seminar_p_13_12_0"
+      ],
+      "declined": false
+    },
+    "what is the planned fix for the locality problem in the bug corpus": {
+      "answer": "A second arm of synthetic injected bugs, where locality holds by construction [1]. This responds to the audit finding that only 43% of 30 hand-checked pairs met the requirement that the bug be findable from the shown function alone, since many mined fixes are only diagnosable with repo-wide context [1].",
+      "cited": [
+        "projects_llm_code_review_evaluation_in_progress_5_1"
+      ],
+      "declined": false
+    },
+    "can dino features be used for classification without fine tuning": {
+      "answer": "Yes. His DINO seminar describes features strong enough for k-NN classification without fine-tuning [1], and the summary lists feature quality as having potential for k-NN classification and image retrieval [3].",
+      "cited": [
+        "projects_seminar_dino_and_the_emerging_properties_3_0",
+        "dino_seminar_p_41_40_0"
+      ],
+      "declined": false
+    },
+    "how was the optimization process formulated as a reinforcement learning problem": {
+      "answer": "With three coursemates at the University of Freiburg, the optimization process was formulated as a reinforcement-learning environment that an agent interacts with [1][3]. The agent is exposed to a range of objective functions and rewarded for the optimal choice of algorithm at each step, so it learns a policy that minimises the objective rather than a fixed schedule [1][4]. Optimization tasks were designed with various topologies so the agent could learn a general policy [4].",
+      "cited": [
+        "projects_switching_optimizers_a_reinforcement_lea_2_0",
+        "switching_optimizers_p_1_0_0",
+        "switching_optimizers_p_1_0_1"
+      ],
+      "declined": false
+    },
+    "what does it mean for a context strategy to transfer from small to large scale": {
+      "answer": "It means a strategy for choosing context can be tuned cheaply on small-scale runs and still work at large scale, where the compute actually goes [1]. That is the practically useful question because testing every hyperparameter combination directly at full scale is not practical, so the project asks whether a small-scale curve can be used to extrapolate a larger-scale one [2].",
+      "cited": [
+        "projects_master_project_predicting_a_model_s_fina_0_1",
+        "master_project_p_3_2_0"
+      ],
+      "declined": false
     }
   }
 }

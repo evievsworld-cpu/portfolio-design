@@ -223,9 +223,12 @@ function render({ status, answer, hits, cited, declined }) {
 
 /* ------------------------------------------------------------- answer paths */
 
+// Third person, to match the cached answers and declines. Those come from the model
+// under worker/index.js rule 5 ("write in third person"), so a first-person fallback
+// here made the widget switch voice mid-session depending on which path answered.
 const DECLINE_TEXT =
-  "That isn't covered by my published documents, so I'd rather not guess. " +
-  "Email me at hd103@email.uni-freiburg.de and I can answer directly.";
+  "That isn't covered by his published documents, so this bot won't guess. " +
+  "Email him at hd103@email.uni-freiburg.de and he can answer directly.";
 
 /** The decline state, shared by every answer path. */
 function declined(status) {
@@ -243,7 +246,7 @@ function declined(status) {
  */
 function extractive(result) {
   if (result.abstain || !result.hits.length) {
-    return declined("not covered by my documents");
+    return declined("not covered by his documents");
   }
   return {
     status: "retrieved · quoting the source directly",
@@ -276,7 +279,7 @@ async function generate(question, hits) {
   }
   return {
     status: data.declined
-      ? "not covered by my documents"
+      ? "not covered by his documents"
       : "answered from the sources below",
     answer: data.answer,
     hits,
@@ -315,7 +318,7 @@ async function ask(question) {
     // question, no amount of generation will fix that, and asking anyway invites
     // the model to pad an answer out of loosely-related context.
     if (result.abstain) {
-      render(declined("not covered by my documents"));
+      render(declined("not covered by his documents"));
       return;
     }
 
